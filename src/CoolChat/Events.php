@@ -2,14 +2,21 @@
 namespace CoolChat;
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
+define('AES_256_CBC', 'aes-256-cbc');
+define('SECRET_KEY', 'wetgsdgbt');
+define('AES_IV', 'q1w2e3r4t5y6u7i8');
 
-$dbconn = pg_connect("host=localhost dbname=php_chat user=postgres password=123456");
 
 class Events implements MessageComponentInterface {
     protected $clients;
 
     public function __construct() {
         $this->clients = new \SplObjectStorage;
+        $this->conn = pg_connect("host=localhost dbname=php_chat user=postgres password=123456");
+    }
+
+    public function query($query){
+        return pg_fetch_all(pg_query($this->conn, $query));
     }
 
     public function onOpen(ConnectionInterface $conn) {
@@ -17,10 +24,19 @@ class Events implements MessageComponentInterface {
         echo "Законнектился новый пассажир ({$conn->resourceId})\n";
     }
 
-    public function onMessage(ConnectionInterface $from, $msg) {
+    public function onMessage(ConnectionInterface $client, $msg) {
         $msg = json_decode($msg);
         $method = $msg->method;
-        Events::$method($from, $msg->body);
+        if ($msg->token) {
+            $token = str_replace('-','=', $msg->token);
+            $token = str_replace('.','+', $token);
+            $token = str_replace('_','/', $token);
+
+            $user = openssl_decrypt($token, AES_256_CBC, SECRET_KEY, 0, AES_IV);
+            $user = json_decode($user);
+
+            Events::$method($client, $msg->body, $user->login);
+        }
     }
 
     public function onClose(ConnectionInterface $conn) {
@@ -30,42 +46,30 @@ class Events implements MessageComponentInterface {
 
     public function onError(ConnectionInterface $conn, \Exception $e) {
         echo "Еггог: {$e->getMessage()}\n";
-
         $conn->close();
     }
 
-    public function send_msg($from, $msg) {
+    public function send_msg($from, $msg, $login) {
+        $time = date("U");
+        $msg->text = str_replace('<', '&lt;', $msg->text);
+        $msg->text = str_replace("'", "\'", $msg->text);
+        $que ="INSERT INTO chat_log VALUES ('" . $login . "', '" . $msg->text . "', ". $time . ");"; // ааа!..
+        $this->query($que);
+        $msg->login = $login;
+        $msg->time = $time;
+
         $msg = json_encode(array('method' => 'new_msg', 'body' => $msg));
         foreach ($this->clients as $client) {
-            if ($from !== $client) {
                 $client->send($msg);
-            }
         }
     }
 
-    public function auth($from, $msg) {
-        // тут мутим с базой
-        $msg = json_encode(array('method' => 'new_msg', 'body' => $msg));
+    public function get_log($from) {
+        $que = 'SELECT * FROM chat_log order by time desc LIMIT 30;';
+        $log = $this->query($que);
+        $msg = json_encode(array('method' => 'chat_log', 'body' => $log));
         foreach ($this->clients as $client) {
-            if ($from !== $client) {
-                $client->send($msg);
-            }
-        }
-    }
-    public function reg($from, $msg) {
-        // тут мутим с базой
-        $msg = json_encode(array('method' => 'new_msg', 'body' => $msg));
-        foreach ($this->clients as $client) {
-            if ($from !== $client) {
-                $client->send($msg);
-            }
-        }
-    }
-    public function get_log($from, $msg) {
-        // тут мутим с базой
-        $msg = json_encode(array('method' => 'new_msg', 'body' => $msg));
-        foreach ($this->clients as $client) {
-            if ($from !== $client) {
+            if ($from === $client) {
                 $client->send($msg);
             }
         }
