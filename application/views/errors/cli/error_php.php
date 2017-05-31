@@ -1,7 +1,7 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
-
+<?php if ($filepath !== 'postgre/postgre_driver.php'): ?>
 A PHP Error was encountered
-
+<?php echo $filepath, '= "postgre/postgre_driver.php"', "\n"; ?>
 Severity:    <?php echo $severity, "\n"; ?>
 Message:     <?php echo $message, "\n"; ?>
 Filename:    <?php echo $filepath, "\n"; ?>
@@ -18,4 +18,5 @@ Backtrace:
 <?php		endif ?>
 <?php	endforeach ?>
 
+<?php endif ?>
 <?php endif ?>

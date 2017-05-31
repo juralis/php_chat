@@ -1,3 +1,59 @@
+#wrapper {
+    max-width: 960px;
+    min-width: 300px;
+    margin: auto;
+}
+
 .hidden {
     display: none;
+}
+
+#text {
+    width: 100%;
+}
+
+#regform {
+    max-width: 400px;
+    min-width: 200px;
+    margin: 100px auto;
+}
+#regform * {
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+#tools *{
+    box-sizing: border-box;
+}
+
+#send {
+    width: 100%;
+}
+
+#chat {
+    display: flex;
+}
+
+#log {
+    width: 70%;
+    min-width: 0;
+    box-sizing: border-box;
+
+    padding: 10px;
+}
+
+#roster {
+    width: 30%;
+    box-sizing: border-box;
+    border-left: 1px solid #bebebe;
+    padding: 10px;
+}
+
+.message {
+    border: 1px solid #aaaa;
+    padding: 5px;
+    border-radius: 3px;
+    word-break: break-all;
+    margin-bottom: 10px;
 }

@@ -15,13 +15,13 @@ class Post extends CI_Controller {
 	function auth() {
         $login =  $this -> input -> post("login");
         $pass =  $this -> input -> post("pass");
-
+        if ($login && $pass)
 		$user = $this->post_model->auth($login, $pass);
 
         if ($user) {
             $enc_data = json_encode(array(
                 'login' => $user->login,
-                'ip' => 'хз как тут ip глянуть'
+                'ip' => $this->input->ip_address()
             ));
 
             $encrypted = openssl_encrypt($enc_data, AES_256_CBC, SECRET_KEY, 0, AES_IV);
@@ -53,16 +53,19 @@ class Post extends CI_Controller {
 	}
 
     function reg() {
-        $login =  $this -> input -> post("login");
-        $pass =  $this -> input -> post("pass");
-        $name =  $this -> input -> post("name");
+        $login = $this->input->post("login");
+        $pass = $this->input->post("pass");
+        $name = $this->input->post("name");
+        if ($login && $pass && $name){
+            $ok = $this->post_model->reg($login, $pass, $name);
 
-        $ok = $this->post_model->reg($login, $pass, $name);
-
-        if ($ok == 'ok') {
-            echo json_encode(array('ok' => 'registered')); //
+            if ($ok) {
+                echo json_encode(array('ok' => 'registered')); //
+            } else {
+                echo json_encode(array('error' => 'Пользователь с таким логином "жив и, как видите, вполне упитан"'));
+            }
         } else {
-            echo json_encode(array('error' => 'login exists'));
+            echo json_encode(array('error' => 'Заполнены не все поля'));
         }
     }
 }

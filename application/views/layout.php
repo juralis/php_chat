@@ -7,86 +7,123 @@
     <link type="text/css" rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-<div id="log"></div>
-<textarea id="text" cols="30" rows="10" class="hidden" autocomplete="off"></textarea>
-<div id="regform" class="hidden">
-    <p><label for="login">Логин<input type="text" id="login" autocomplete="off"></label></p>
-    <p><label for="name" class="hidden">Имя<input type="text" id="name" autocomplete="off"></label></p>
-    <p><label for="pass">Пароль<input type="password" id="pass"></label></p>
-    <p><label for="pass2" class="hidden">Ещё пароль<input type="password" id="pass2"></label></p>
-    <p><button id="auth">Залогиниться</button></p>
-    <p><button id="show_reg">Нет логина?</button></p>
-    <p><button id="reg" class="hidden">Зарегиться</button></p>
+<div id="wrapper">
+    <div id="chat">
+        <div id="log"></div>
+        <div id="roster">
+
+        </div>
+    </div>
+    <div id="tools">
+        <p><textarea id="text" class="hidden" autocomplete="off"></textarea></p>
+        <p><button id="send" class="hidden">Отправить</button></p>
+        <p><button id="logout" class="hidden">Разлогиниться</button></p>
+    </div>
+
+    <div id="regform" class="hidden">
+        <h2>Вход</h2>
+        <p><input class="hidden" placeholder="Имя" type="text" id="name" autocomplete="off"></p>
+        <p><input placeholder="Логин" type="text" id="login" autocomplete="off"></p>
+        <p><input placeholder="Пароль" type="password" id="pass"></p>
+        <p><input class="hidden" placeholder="Больше паролей богу паролей" type="password" id="pass2"></p>
+        <p><button id="auth">Залогиниться</button></p>
+        <p><button id="show_reg">Нет логина?</button></p>
+        <p><button id="reg" class="hidden">Подтвердить</button></p>
+    </div>
 </div>
-<button id="send" class="hidden">Отправить</button>
-<button id="logout" class="hidden">Разлогиниться</button>
 <script>
     var base_url = "<?php echo base_url(); ?>";
     var ws_port = "<?php echo WS_PORT; ?>";
     var ws_host = "<?php echo WS_HOST; ?>";
 
-    var ws = {push: function(){console.log('Нет связи')}};
+    var ws = {push: function(){console.log('Нет связи'); return false;}};
     var ws_timer = null;
     var last_msg = null;
+
+    function form_message(msg){
+        var msg_p = $('<fieldset>', {id: 'ts'+msg.time, class: 'message'});
+        var time = $('<small>').append(strftime(msg.time, '%d.%M.%Y %h:%m:%s'));
+        var login = $('<i>').append(msg.login);
+        var leg = $('<legend>').append([time, ' ', login, ': ']);
+        msg_p.append([leg, msg.text.replace(/\n/g, '<br>')]);
+        return msg_p;
+    }
 
     var Methods = {
         chat_log: function(data){
             data = data.reverse();
             for (var i in data ){
-                $('#log').append('<p><small>'+strftime(data[i].time, '%d.%M.%Y %h:%m:%s')+'</small> <i>'+data[i].login+'</i>:'+data[i].text + '</p>');
-                console.log(data[i])
+                if ($('#ts'+data[i].time).length === 0) {
+                    $('#log').append(form_message(data[i]));
+                    last_msg = data[i].time
+                }
             }
         },
         new_msg: function(data){
-            $('#log').append('<p><small>'+strftime(data.time, '%d.%M.%Y %h:%m:%s')+'</small> <i>'+data.login+'</i>:'+data.text + '</p>');
-            console.log(data)
+            $('#log').append(form_message(data));
+            last_msg = data.time
         },
-        sync: function(data){
-            // если в наборе будет сообщение, которое уже есть в логе, тогда всё ок. Если нет, тогда надо поставить черту и кнопку подгрузки прошлых сообщений.
-            for (var i in data ){
-                // append to log_window (reversed)
-                console.log(data[i])
+        online: function(data){
+            $('#roster').empty();
+            for (var i in data) {
+                if ($('#user_'+data[i]).length===0) {
+                    $('#roster').append('<p id="user_' + data[i] + '">' + data[i] + '</p>')
+                }
+            }
+        },
+        user_left: function(data){
+            $('#user_'+data).remove();
+        },
+        user_came: function(data){
+            if ($('#user_'+data).length===0) {
+                $('#roster').append('<p id="user_' + data + '">' + data + '</p>')
             }
         }
     };
 
-    function ws_connect(){
-        ws = new WebSocket('ws://'+ws_host+':'+ws_port+'/ws/');
-        ws.onopen = function() {
-            if(ws_timer){
-                clearInterval(ws_timer);
-                ws_timer = null;
-            }
-            if (last_msg) {
-                ws.push('sync', {last_msg: last_msg})
-            } else {
-                ws.push('get_log', {})
-            }
-            console.log("ws-соединение установлено.");
-        };
+    function ws_connect() {
+        if (!ws.onopen) {
+            ws = new WebSocket('ws://' + ws_host + ':' + ws_port + '/ws/');
 
-        ws.onmessage = function(msg) {
-            var data = JSON.parse(msg.data);
-            if (Methods.hasOwnProperty(data.method)) {
-                Methods[data.method](data.body)
-            } else {
-                console.log('Вызванный метод ' + data.method + ' - не реализован в текущей версии.')
-            }
-        };
-        ws.push = function(method, data){
-            ws.send(JSON.stringify({method: method, body: data, token: get_cookie('token')}))
-        };
-        ws.onclose = function(event) {
-            ws = {push: function(){console.log('Нет связи')}};
-            if (event.wasClean) {
-            } else {
-                if(!ws_timer) {
-                    console.log('Обрыв соединения ws. Код: ' + event.code);
-                    ws_timer = setInterval(ws_connect, 5000);
-                    console.log('Через 5 секунд будет попытка восстановить соединение - не надо тут ничего рефрешить. Само отрефрешится.');
+            ws.onopen = function () {
+                if (ws_timer) {
+                    clearInterval(ws_timer);
+                    ws_timer = null;
                 }
-            }
-        };
+                ws.push('get_log', {});
+                ws.push('online', {});
+                console.log("ws-соединение установлено.");
+            };
+
+            ws.onmessage = function (msg) {
+                var data = JSON.parse(msg.data);
+                if (Methods.hasOwnProperty(data.method)) {
+                    Methods[data.method](data.body)
+                } else {
+                    console.log('Вызванный метод ' + data.method + ' - не реализован в текущей версии.')
+                }
+            };
+            ws.push = function (method, data) {
+                ws.send(JSON.stringify({method: method, body: data, token: get_cookie('token')}))
+                return true;
+            };
+            ws.onclose = function (event) {
+                ws = {
+                    push: function () {
+                        console.log('Нет связи');
+                        return false;
+                    }
+                };
+                if (event.wasClean) {
+                } else {
+                    if (!ws_timer) {
+                        console.log('Обрыв соединения ws. Код: ' + event.code);
+                        ws_timer = setInterval(ws_connect, 5000);
+                        console.log('Через 5 секунд будет попытка восстановить соединение - не надо тут ничего рефрешить. Само отрефрешится.');
+                    }
+                }
+            };
+        }
     }
 
     function set_cookie(name, value, days) {
@@ -104,8 +141,10 @@
         var cooks = document.cookie.split(';');
         for(var i=0;i < cooks.length;i++) {
             var c = cooks[i];
-            while (c.charAt(0)==' ') c = c.substring(1,c.length);
-            if (c.indexOf(name) == 0) return decodeURI(c.substring(name.length,c.length));
+            while (c.charAt(0)==' ')
+                c = c.substring(1,c.length);
+            if (c.indexOf(name) == 0)
+                return decodeURI(c.substring(name.length,c.length));
         }
         return false;
     }
@@ -141,9 +180,18 @@
         } else {
             $('#regform').removeClass('hidden')
         }
+
         $('#send').on('click', function(){
-            ws.push('send_msg', {text: $('#text').val() || 'test_text'});
-            $('#text').val('')
+            if ($('#text').val()) {
+                if (ws.push('send_msg', {text: $('#text').val() || 'test_text'})) {
+                    $('#text').val('')
+                } else {
+                    $('#send').text('Оказия...');
+                    setTimeout(function () {
+                        $('#send').text('Отправить')
+                    })
+                }
+            }
         });
 
         $('#auth').on('click', function(){
@@ -178,26 +226,28 @@
 
         $('#reg').on('click', function(){
             var ok = true;
+
             if (!$('#login').val()){
                 alert('Логин надо');
                 ok = false;
             }
-            if (!$('#pass').val()){
+            if (ok && !$('#pass').val()){
                 alert('пароль надо');
                 ok = false;
             }
-            if (!$('#name').val()){
+            if (ok && !$('#name').val()){
                 alert('имя надо');
                 ok = false;
             }
-            if (!$('#pass2').val()){
+            if (ok && !$('#pass2').val()){
                 alert('пароль2 надо');
                 ok = false;
             }
-            if ($('#pass2').val() != $('#pass2').val()){
+            if (ok && $('#pass2').val() != $('#pass2').val()){
                 alert('пароль и пароль2 должны быть одинаковы');
                 ok = false;
             }
+
             if (ok) {
                 $.ajax({
                     type: 'post',
@@ -216,9 +266,7 @@
                         } else {
                             alert(data.error)
                         }
-                    }, error: function (request, error) {
-
-                    }
+                    }, error: function (request, error) {}
                 });
             }
         });
@@ -228,19 +276,35 @@
             erase_cookie('login');
             location.reload()
         });
+
         $('#show_reg').on('click', function(){
-            if($('#name').parent().is('.hidden')) {
-                $('#name').parent().removeClass('hidden');
-                $('#pass2').parent().removeClass('hidden');
+            if($('#name').is('.hidden')) {
+                $('#name').removeClass('hidden');
+                $('#pass2').removeClass('hidden');
                 $('#show_reg').text('Отмена');
                 $('#reg').removeClass('hidden');
                 $('#auth').addClass('hidden');
+                $('#regform h2').text('Регистрация');
             } else {
-                $('#name').parent().addClass('hidden');
-                $('#pass2').parent().addClass('hidden');
+                $('#name').addClass('hidden');
+                $('#pass2').addClass('hidden');
                 $('#show_reg').text('Нет логина?');
                 $('#reg').addClass('hidden');
                 $('#auth').removeClass('hidden');
+                $('#regform h2').text('Вход');
+            }
+        });
+
+        $('#pass').keypress(function(event){
+            var keycode = (event.keyCode ? event.keyCode : event.which);
+            if(keycode == 13){
+                $('#auth').click();
+            }
+        });
+
+        $('#text').keydown(function (e) {
+            if (e.ctrlKey && e.keyCode == 13) {
+                $('#send').click()
             }
         });
     });

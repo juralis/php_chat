@@ -22,17 +22,11 @@ class Post_model extends CI_Model {
 	
 	function reg($login, $pass, $name) {
         $pass = openssl_digest($pass, 'sha256', false);
-
-        $this->db->select('login');
-        $this->db->from('users');
-        $this->db->where('login', $login);
-        $user = $this->db->get()->result();
-        // не понял как поймать ошибку при инсёрте. Так-то вроде нужно через него определять...
-        if (!empty($user)) {
-            return false;
-        } else {
-            $this->db->insert("users", array('login' => $login, 'pass' => $pass, 'name' => $name));
+        $this->db->insert("users", array('login' => $login, 'pass' => $pass, 'name' => $name));
+        if ($this->db->affected_rows() > 0){
             return true;
+        } else {
+            return false;
         }
     }
 }
