@@ -16,7 +16,7 @@
     </div>
     <div id="tools">
         <p><textarea id="text" class="hidden" autocomplete="off"></textarea></p>
-        <p><button id="send" class="hidden">Отправить</button></p>
+        <p><button id="send" class="hidden">ctrl+enter</button></p>
         <p><button id="logout" class="hidden">Разлогиниться</button></p>
     </div>
 
