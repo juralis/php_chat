@@ -67,9 +67,7 @@ CREATE TABLE users
 (
     login TEXT NOT NULL,
     pass TEXT NOT NULL,
-    name TEXT NOT NULL,
-    ts TIMESTAMP,
-    last_visit INT
+    name TEXT NOT NULL
 );
 CREATE UNIQUE INDEX users_login_uindex ON users (login);
 ```
@@ -78,7 +76,7 @@ CREATE UNIQUE INDEX users_login_uindex ON users (login);
 ``` 
 CREATE TABLE chat_log
 (
-    author_id INT NOT NULL,
+    login TEXT NOT NULL,
     text TEXT NOT NULL,
     time INT NOT NULL
 );
@@ -92,15 +90,11 @@ CREATE TABLE chat_log
 INSERT INTO users (
   login,
   pass,
-  name,
-  ts,
-  last_visit
+  name
 ) VALUES (
   'test1',
-  'q1w2e3r4t5y6', --Кстати, а как там хэш в пхп считать?
+  'q1w2e3r4t5y6',
   'Христофор',
-  '2014-04-04 20:00:00-07', -- Это у них называется timestamp?
-  0
 )
 ```
 тааак...
@@ -153,7 +147,30 @@ root-|
 
 Не окончено. В принципе, можно с некоторой натяжкой говорить о том, что я многое понял сегодня и костяк приложения готов (по крайней мере, понятно, что оно будет работать как оно будет работать).
 
-- прикрутить куда-нибудь варнишь
 
-Раскомментить в php.ini:
+### Последок.
+
+Вроде всё это как-то аскетично работает. Делаю публичную версию, если так можно выразиться. Всё вышеозначенное + варниш. Варнишь, варнишь... 
+
+Нгинкс у меня уже стоял, постгрес поставил, как выше написано (там сейчас другие слегка таблички созданы, но в целом тоже самое).
+
+Код брать тут:  
+
+`git clone https://github.com/juralis/php_chat.git`  
+
+На всякой случай, прежде чем, надо вот:
+
+``` 
+sudo apt-get install php-fpm 
+sudo apt-get install php-pgsql
+```
+
+Там, кроме всего прочего, надо раскомментить в php.ini:
+```
 extension=php_openssl.dll
+extension=php_pgsql.dll
+extension=php_pdo_pgsql.dll
+```
+Чтобы крипта взлетела.  
+
+Конфиг для нгинкса лежит вместе с кодом приложения в папке configs (там внутри папка site-enabled, надо из неё взять файл и отправить в /etc/nginx/site-enabled/)
