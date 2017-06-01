@@ -17,7 +17,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | environments.
 |
 */
-$config['base_url'] = 'http://localhost:8080';
+$config['base_url'] = 'http://digests.su:8080';
 
 /*
 |--------------------------------------------------------------------------
@@ -218,7 +218,7 @@ $config['log_threshold'] = 4;
 | application/logs/ directory. Use a full server path with trailing slash.
 |
 */
-$config['log_path'] = '/pro/php_chat/application/logs/';
+$config['log_path'] = '/php_chat/application/logs/';
 
 /*
 |--------------------------------------------------------------------------

@@ -8,7 +8,6 @@ class Post_model extends CI_Model {
 		$this->db->select('login, name, pass');
   		$this->db->from('users');
 		$this->db->where('login', $login);
-		log_message('info', $this->db->get());
 		$user = $this->db->get()->result();
 
 		if (!empty($user)){
