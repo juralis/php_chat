@@ -15,40 +15,44 @@ class Post extends CI_Controller {
 	function auth() {
         $login =  $this -> input -> post("login");
         $pass =  $this -> input -> post("pass");
-        if ($login && $pass)
-		$user = $this->post_model->auth($login, $pass);
+        if ($login && $pass) {
+            $user = $this->post_model->auth($login, $pass);
 
-        if ($user) {
-            $enc_data = json_encode(array(
-                'login' => $user->login,
-                'ip' => $this->input->ip_address()
-            ));
 
-            $encrypted = openssl_encrypt($enc_data, AES_256_CBC, SECRET_KEY, 0, AES_IV);
-            $encrypted = str_replace('=','-',$encrypted);
-            $encrypted = str_replace('+','.',$encrypted);
-            $encrypted = str_replace('/','_',$encrypted);
-            $token_cookie = array(
-                'name' => 'token',
-                'value' => $encrypted,
-                'expire' => '400000',
-                'secure' => false
-            );
+            if ($user) {
+                $enc_data = json_encode(array(
+                    'login' => $user->login,
+                    'ip' => $this->input->ip_address()
+                ));
 
-            $login_cookie = array(
-                'name' => 'login',
-                'value' => $user->login,
-                'expire' => '400000',
-                'secure' => false
-            );
+                $encrypted = openssl_encrypt($enc_data, AES_256_CBC, SECRET_KEY, 0, AES_IV);
+                $encrypted = str_replace('=', '-', $encrypted);
+                $encrypted = str_replace('+', '.', $encrypted);
+                $encrypted = str_replace('/', '_', $encrypted);
+                $token_cookie = array(
+                    'name' => 'token',
+                    'value' => $encrypted,
+                    'expire' => '400000',
+                    'secure' => false
+                );
 
-            $this->input->set_cookie($token_cookie);
-            $this->input->set_cookie($login_cookie);
+                $login_cookie = array(
+                    'name' => 'login',
+                    'value' => $user->login,
+                    'expire' => '400000',
+                    'secure' => false
+                );
 
-            echo json_encode($user); // очуметь! Вы серьёзно? Эхо фигачит прямо в респонс?
+                $this->input->set_cookie($token_cookie);
+                $this->input->set_cookie($login_cookie);
 
+                echo json_encode($user); // очуметь! Вы серьёзно? Эхо фигачит прямо в респонс?
+
+            } else {
+                echo json_encode(array('error' => 'user not found or wrong password'));
+            }
         } else {
-            echo json_encode(array('error' => 'user not found or wrong password'));
+            echo json_encode(array('error' => 'Переданы не все данные'));
         }
 	}
 
