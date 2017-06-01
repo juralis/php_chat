@@ -1,6 +1,6 @@
 server {
-        listen 8080;
-        root /pro/php_chat/;
+        listen 9999;
+        root /php_chat/;
         
         index index.html index.php;
 
