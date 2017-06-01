@@ -5,7 +5,7 @@ class Post_model extends CI_Model {
 	function auth($login, $pass) {
         $pass = openssl_digest($pass, 'sha256', false);
 
-		$this->db->select('login, name, last_visit, pass');
+		$this->db->select('login, name, pass');
   		$this->db->from('users');
 		$this->db->where('login', $login);
 		$user = $this->db->get()->result();
