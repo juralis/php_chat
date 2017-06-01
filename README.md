@@ -73,7 +73,7 @@ CREATE UNIQUE INDEX users_login_uindex ON users (login);
 ```
 Не люблю когда неизвестные в общем-то вещи - понятны. Где-то тут должно быть место для выстрела в ногу  
 
-``` 
+```SQL 
 CREATE TABLE chat_log
 (
     login TEXT NOT NULL,
