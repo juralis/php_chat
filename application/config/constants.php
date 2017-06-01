@@ -98,7 +98,7 @@ defined('EXIT__AUTO_MAX')      OR define('EXIT__AUTO_MAX', 125); // highest auto
 define('DEF_CONST', 0);
 define("POST", "post");
 define("WS_HOST", "digests.su");
-define("WS_PORT", "8000");
+define("WS_PORT", "9999");
 define('AES_256_CBC', 'aes-256-cbc');
 define('SECRET_KEY', 'wetgsdgbt');
 define('AES_IV', 'q1w2e3r4t5y6u7i8');
