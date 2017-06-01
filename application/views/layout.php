@@ -8,16 +8,16 @@
 </head>
 <body>
 <div id="wrapper">
-    <div id="chat">
+    <div id="chat" class="hidden">
         <div id="log"></div>
         <div id="roster">
 
         </div>
     </div>
-    <div id="tools">
-        <p><textarea id="text" class="hidden" autocomplete="off"></textarea></p>
-        <p><button id="send" class="hidden">ctrl+enter</button></p>
-        <p><button id="logout" class="hidden">Разлогиниться</button></p>
+    <div id="tools" class="hidden">
+        <p><textarea id="text" autocomplete="off"></textarea></p>
+        <p><button id="send">ctrl+enter</button></p>
+        <p><button id="logout">Разлогиниться</button></p>
     </div>
 
     <div id="regform" class="hidden">
@@ -174,9 +174,8 @@
 
         if (get_cookie('token')){
             ws_connect();
-            $('#send').removeClass('hidden');
-            $('#text').removeClass('hidden');
-            $('#logout').removeClass('hidden');
+            $('#chat').removeClass('hidden');
+            $('#tools').removeClass('hidden');
         } else {
             $('#regform').removeClass('hidden')
         }
@@ -208,9 +207,8 @@
                     success: function (data) {
                         if (!data.error) {
                             ws_connect();
-                            $('#send').removeClass('hidden');
-                            $('#logout').removeClass('hidden');
-                            $('#text').removeClass('hidden');
+                            $('#chat').removeClass('hidden');
+                            $('#tools').removeClass('hidden');
                             $('#regform').addClass('hidden')
                         } else {
                             alert(data.error)
